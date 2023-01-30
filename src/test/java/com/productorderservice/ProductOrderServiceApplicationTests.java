@@ -10,14 +10,12 @@ import java.util.Map;
 
 class ProductOrderServiceApplicationTests {
 
-    private ProductRepository productRepository;
     private ProductService productService;
-    private ProductPort productPort;
 
     @BeforeEach
     void setUp() {
-        productRepository = new ProductRepository();
-        productPort = new ProductAdapter(productRepository);
+        ProductRepository productRepository = new ProductRepository();
+        ProductPort productPort = new ProductAdapter(productRepository);
         productService = new ProductService(productPort);
     }
 
@@ -29,10 +27,17 @@ class ProductOrderServiceApplicationTests {
     @DisplayName("POJO 상품 등록 서비스")
     @Test
     void 상품_등록() {
+        final AddProductRequest request = 상품등록요청_생성();
+
+        productService.addProduct(request);
+    }
+
+    private static AddProductRequest 상품등록요청_생성() {
         final String name = "상품명";
         final int price = 10000;
-        final AddProductRequest request = new AddProductRequest(name, price, DiscountPolicy.NONE);
-        productService.addProduct(request);
+        final DiscountPolicy discountPolicy = DiscountPolicy.NONE;
+
+        return new AddProductRequest(name, price, discountPolicy);
     }
 
     private record AddProductRequest(String name, int price, DiscountPolicy discountPolicy) {
@@ -45,7 +50,6 @@ class ProductOrderServiceApplicationTests {
 
     public enum DiscountPolicy {
         NONE,
-
     }
 
     private class ProductService {
@@ -63,8 +67,8 @@ class ProductOrderServiceApplicationTests {
     }
 
     private class Product {
-
         private Long id;
+
         private final String name;
         private final int price;
         private final DiscountPolicy discountPolicy;
@@ -79,21 +83,8 @@ class ProductOrderServiceApplicationTests {
             this.discountPolicy = discountPolicy;
         }
 
-
         public Long getId() {
             return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getPrice() {
-            return price;
-        }
-
-        public DiscountPolicy getDiscountPolicy() {
-            return discountPolicy;
         }
 
         public void assginId(Long id) {
@@ -101,30 +92,27 @@ class ProductOrderServiceApplicationTests {
         }
     }
 
-    private class ProductPort {
-        public void addProduct(Product product) {
-
-        }
+    private interface ProductPort {
+        void addProduct(Product product);
     }
 
-    private class ProductAdapter extends ProductPort {
+    private class ProductAdapter implements ProductPort {
 
         private final ProductRepository productRepository;
 
-        private ProductAdapter(ProductRepository productRepository) {
+        private ProductAdapter(final ProductRepository productRepository) {
             this.productRepository = productRepository;
         }
 
         @Override
         public void addProduct(final Product product) {
             productRepository.save(product);
-
         }
     }
 
     private class ProductRepository {
         private Long seq = 0L;
-        private Map<Long, Product> persistence = new HashMap<>();
+        private final Map<Long, Product> persistence = new HashMap<>();
 
         public void save(Product product) {
             product.assginId(++seq);
